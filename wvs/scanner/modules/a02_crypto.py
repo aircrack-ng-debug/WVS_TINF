@@ -25,23 +25,17 @@ import re
 import socket
 import ssl
 import urllib.parse as _urlparse
-from dataclasses import dataclass
 from typing import Dict, List
 
 import requests
 
-__all__ = ["run", "Issue", "ResultDict"]
+from wvs.scanner.models import Issue, Severity
+
+__all__ = ["run", "ResultDict"] # Issue is now imported
 
 # --------------------------------------------------------------------------------------
 # Dataclasses & Types
 # --------------------------------------------------------------------------------------
-@dataclass
-class Issue:
-    name: str
-    description: str
-    severity: str  # "low", "medium", "high"
-    reference: str
-
 ResultDict = Dict[str, List[Issue]]
 
 # --------------------------------------------------------------------------------------
@@ -83,9 +77,10 @@ def _check_tls(target_url: str) -> List[Issue]:
                         f"Server negotiated {proto}. Anything below TLS 1.2 is considered insecure "
                         "and vulnerable to known downgrade and cryptographic attacks."
                     ),
-                    severity="high",
-                    reference="https://owasp.org/www-project-secure-headers/"
-                    "#strict-transport-security"
+                    severity=Severity.HIGH,
+                    remediation="Configure the server to use TLS 1.2 or TLS 1.3. Disable support for older protocols like SSLv3, TLS 1.0, and TLS 1.1.",
+                    references=["https://owasp.org/www-project-secure-headers/#strict-transport-security"],
+                    id="WVS-A02-001", # Example ID
                 )
             )
         if _WEAK_CIPHERS_RE.search(cipher or ""):
@@ -96,8 +91,10 @@ def _check_tls(target_url: str) -> List[Issue]:
                         f"Server chose the weak cipher‐suite `{cipher}` which is susceptible to modern "
                         "cryptanalysis. Replace with suites that offer forward secrecy and AEAD."
                     ),
-                    severity="high",
-                    reference="https://datatracker.ietf.org/doc/html/rfc7457"
+                    severity=Severity.HIGH,
+                    remediation="Configure the server to use strong cipher suites. Prioritize AEAD ciphers and those that support Perfect Forward Secrecy. Consult Mozilla's Server Side TLS guidelines for recommended configurations.",
+                    references=["https://datatracker.ietf.org/doc/html/rfc7457"],
+                    id="WVS-A02-002", # Example ID
                 )
             )
     except Exception as exc:
@@ -105,8 +102,10 @@ def _check_tls(target_url: str) -> List[Issue]:
             Issue(
                 name="TLS handshake failed",
                 description=f"TLS connection to {host}:{port} failed: {exc}",
-                severity="high",
-                reference="https://owasp.org/Top10/A02_2021-Cryptographic_Failures/"
+                severity=Severity.HIGH,
+                remediation="Ensure the target host and port are reachable and that there are no network issues (e.g., firewall rules) blocking the connection. Verify the TLS/SSL certificate is valid and correctly installed.",
+                references=["https://owasp.org/Top10/A02_2021-Cryptographic_Failures/"],
+                id="WVS-A02-003", # Example ID
             )
         )
 
@@ -133,19 +132,23 @@ def _check_cookies(target_url: str) -> List[Issue]:
         if "secure" not in attr:
             issues.append(
                 Issue(
+                    id="WVS-A02-004", # Example ID
                     name="Cookie without `Secure` flag",
-                    description=f"`Set-Cookie` header `{hdr}` lacks the `Secure` attribute.",
-                    severity="medium",
-                    
+                    description=f"`Set-Cookie` header `{hdr}` lacks the `Secure` attribute. The cookie can be transmitted over unencrypted channels.",
+                    severity=Severity.MEDIUM,
+                    remediation="Add the `Secure` attribute to all sensitive cookies. This ensures they are only sent over HTTPS.",
+                    references=["https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies"]
+                )
             )
         if "httponly" not in attr:
             issues.append(
-                Ireference="https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies"
-                )ssue(
+                Issue(
+                    id="WVS-A02-005", # Example ID
                     name="Cookie without `HttpOnly` flag",
-                    description=f"`Set-Cookie` header `{hdr}` lacks the `HttpOnly` attribute.",
-                    severity="medium",
-                    reference="https://owasp.org/www-project-top-ten/2017/A3_2017-Sensitive_Data_Exposure.html"
+                    description=f"`Set-Cookie` header `{hdr}` lacks the `HttpOnly` attribute. The cookie can be accessed by client-side scripts, increasing XSS risk.",
+                    severity=Severity.MEDIUM,
+                    remediation="Add the `HttpOnly` attribute to all cookies that do not need to be accessed by JavaScript. This mitigates the risk of cookie theft via XSS.",
+                    references=["https://owasp.org/www-project-top-ten/2017/A3_2017-Sensitive_Data_Exposure.html"]
                 )
             )
     return issues
@@ -173,5 +176,5 @@ def run(target_url: str) -> ResultDict:  # noqa: D401 – imperative mood accept
 
     return {
         "module": "A02 – Cryptographic Failures",
-        "issues": [issue.__dict__ for issue in issues],
+        "issues": [issue.to_dict() for issue in issues],
     }
