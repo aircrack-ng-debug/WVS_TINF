@@ -126,7 +126,7 @@ def _check_cookies(target_url: str) -> List[Issue]:
         # requests' cookiejar API is clunky; iterate manually over headers instead
         pass
 
-    for hdr in resp.headers.get_all("Set-Cookie", default=[]):  # Python 3.11+ get_all()
+    for hdr in resp.headers.get_all("Set-Cookie"):  # Python 3.11+ get_all()
         # Normalise attributes for search
         attr = hdr.lower()
         if "secure" not in attr:
