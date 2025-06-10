@@ -23,9 +23,14 @@ from typing import Dict, List
 
 import requests
 
-from .a02_crypto import Issue, ResultDict  # reuse Issue dataclass for uniformity
+from wvs.scanner.models import Issue, Severity # Import new Issue and Severity
+from typing import Dict, List # Added for ResultDict
 
 __all__ = ["run"]
+
+# Define ResultDict locally as it's a simple type alias
+# and a02_crypto's ResultDict will also be based on the new Issue model
+ResultDict = Dict[str, List[Issue]]
 
 
 _HEADER_EXPECTATIONS = {
@@ -46,10 +51,12 @@ def _evaluate_headers(headers: Dict[str, str]) -> List[Issue]:
         if header not in canonical:
             issues.append(
                 Issue(
+                    id=f"WVS-A05-{header.upper()}-001", # Example ID
                     name=f"Missing security header: {header}",
-                    description=f"The response lacks the `{header}` header.",
-                    severity="medium",
-                    reference="https://owasp.org/www-project-secure-headers/"
+                    description=f"The response lacks the `{header}` header. This could expose the application to various attacks depending on the missing header.",
+                    severity=Severity.MEDIUM,
+                    remediation=f"Implement the `{header}` HTTP security header. Consult OWASP Secure Headers Project for specific recommendations.",
+                    references=["https://owasp.org/www-project-secure-headers/"]
                 )
             )
             continue
@@ -57,13 +64,15 @@ def _evaluate_headers(headers: Dict[str, str]) -> List[Issue]:
         if not pattern.search(value):
             issues.append(
                 Issue(
+                    id=f"WVS-A05-{header.upper()}-002", # Example ID
                     name=f"Misconfigured security header: {header}",
                     description=(
                         f"Header `{header}: {value}` does not meet recommended security "
-                        "configuration (pattern mismatch)."
+                        "configuration (pattern mismatch). This might render the protection ineffective."
                     ),
-                    severity="low",
-                    reference="https://owasp.org/www-project-secure-headers/"
+                    severity=Severity.LOW,
+                    remediation=f"Review and reconfigure the `{header}` HTTP security header according to best practices. Verify the configuration using security tools and documentation.",
+                    references=["https://owasp.org/www-project-secure-headers/"]
                 )
             )
     return issues
@@ -77,5 +86,5 @@ def run(target_url: str) -> ResultDict:
 
     return {
         "module": "A05 – Security Misconfiguration (Headers)",
-        "issues": [issue.__dict__ for issue in issues],
+        "issues": [issue.to_dict() for issue in issues],
     }

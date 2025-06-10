@@ -24,9 +24,13 @@ from typing import Dict, List, Optional, Tuple
 import requests
 from bs4 import BeautifulSoup  # external dependency, common in security tooling
 
-from .a02_crypto import Issue, ResultDict
+from wvs.scanner.models import Issue, Severity # Import new Issue and Severity
+# ResultDict will be defined locally or imported from a common types module if created
 
 __all__ = ["run"]
+
+# Define ResultDict locally
+ResultDict = Dict[str, List[Issue]]
 
 
 # --- baseline versions ----------------------------------------------------------------
@@ -89,28 +93,32 @@ def run(target_url: str) -> ResultDict:
         if ver == "unknown":
             issues.append(
                 Issue(
+                    id=f"WVS-A06-{comp.upper()}-001", # Example ID
                     name=f"Unable to determine version of {comp}",
                     description=(
                         f"The scanner found `{comp}` but could not extract a semantic version. "
-                        "Manual verification recommended."
+                        "Manual verification recommended to ensure it's not an outdated or vulnerable version."
                     ),
-                    severity="low",
-                    reference="https://owasp.org/www-project-proactive-controls/v4/en/identify_and_inventoried_assets"
+                    severity=Severity.LOW, # Or Severity.INFO depending on policy
+                    remediation=f"Manually verify the version of {comp} in use. If it's outdated or known to be vulnerable, update it to a secure version. Ensure version information is consistently available in asset metadata.",
+                    references=["https://owasp.org/www-project-proactive-controls/v4/en/identify_and_inventoried_assets"]
                 )
             )
         elif _is_outdated(ver, baseline):
             issues.append(
                 Issue(
+                    id=f"WVS-A06-{comp.upper()}-002", # Example ID
                     name=f"Outdated component: {comp} {ver}",
                     description=(
                         f"Detected {comp} version {ver} which is older than the secure baseline {baseline}. "
-                        "Upgrade to the latest stable release."
+                        f"Outdated components can contain known vulnerabilities."
                     ),
-                    severity="medium",
-                    reference="https://github.com/{comp}/{comp}/releases"
+                    severity=Severity.MEDIUM,
+                    remediation=f"Upgrade {comp} from version {ver} to the latest stable release (at least {baseline} or newer). Regularly check for and apply updates to all third-party components.",
+                    references=[f"https://github.com/{comp}/{comp}/releases"] # Potentially make this more generic or look up official advisory links
                 )
             )
     return {
         "module": "A06 – Vulnerable & Outdated Components",
-        "issues": [issue.__dict__ for issue in issues],
+        "issues": [issue.to_dict() for issue in issues],
     }
