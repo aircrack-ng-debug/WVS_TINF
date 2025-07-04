@@ -115,9 +115,7 @@ class A02CryptoScanner(BaseScannerModule):
                 )
             )
 
-        return issues
-
-    # --------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
     # Cookie helpers
     # --------------------------------------------------------------------------------------
 
@@ -130,7 +128,7 @@ class A02CryptoScanner(BaseScannerModule):
         # The loop `for cookie in resp.cookies.list_domains():` was empty and thus removed.
         # Direct iteration over headers is more reliable as per original comment.
 
-        for hdr in resp.headers.get_all("Set-Cookie"): # Python 3.11+ get_all()
+        for hdr in resp.headers.get_all("Set-Cookie"): # Python 3.11+ get_all()
             # Normalise attributes for search
             attr = hdr.lower()
             if "secure" not in attr:
@@ -144,6 +142,7 @@ class A02CryptoScanner(BaseScannerModule):
                         references=["https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#restrict_access_to_cookies"]
                     )
                 )
+                
             if "httponly" not in attr:
                 issues.append(
                     Issue(
