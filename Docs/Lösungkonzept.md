@@ -32,7 +32,7 @@ Start-ups und KMU stehen verstärkt unter Druck, ihre Web-Anwendungen trotz knap
 
 | Ebene | Kernelement | Nutzen |
 |-------|-------------|--------|
-| **4.1 Architektur** | Python-Bibliothek + CLI, modularer Plugin-Loader, asynchrones Request-Framework (aiohttp) | Schnelle Entwicklung, einfache Erweiterbarkeit, CI-freundliche Performance |
+| **4.1 Architektur** | Python-Bibliothek + CLI, modularer Plugin-Loader | Schnelle Entwicklung, einfache Erweiterbarkeit, CI-freundliche Performance |
 | **4.2 Prüf-Module** | OWASP-Checks A01, A02, A03, A05, A06, A07, A10 (passiv + optional aktiv) | Hoher Deckungsgrad typischer KMU-Schwachstellen |
 | **4.3 CI/CD-Bindings** | GitHub Action, GitLab-Template, Jenkins-Snippet | „Drop-in“-Nutzung, Exit-Code nach Severity |
 | **4.4 Reporting** | JSON → SIEM, Markdown/HTML → Dev-Teams, PDF/A-3 → Audit | Maschinell & menschenlesbar; Prüfsumme, CVSS, Compliance-Mapping |
