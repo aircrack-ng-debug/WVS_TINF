@@ -1,12 +1,14 @@
 import typer
 from pathlib import Path
 import tomli
-from typing import Optional, Dict, Any, List  # Added List
+from typing import Optional, Dict, Any, List, Literal  # Added List and Literal
 
 from wvs.scanner.engine import ScannerEngine
 from wvs.scanner.models import \
     Issue  # Ensure Issue is imported if needed for type hints here, though engine returns them.
 from wvs.reporting.console import ConsoleReporter
+from wvs.reporting.json_reporter import JsonReporter
+from wvs.reporting.pdf_reporter import PdfReporter  # Import PdfReporter
 
 # Create a Typer application
 app = typer.Typer(
@@ -98,7 +100,24 @@ def scan(
             readable=True,
             resolve_path=True,
         ),
-        verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output for the report."),
+        format_type: str = typer.Option(
+            "console",
+            "--format",
+            help="Output format for the scan report. Allowed: console, json, pdf.",
+            case_sensitive=False,
+        ),
+        output_file: Optional[Path] = typer.Option(
+            None,
+            "--output",
+            "-o",
+            help="File path to save the report. Required for 'json' and 'pdf' formats.",  # Updated help
+            file_okay=True,
+            dir_okay=False,
+            writable=True,
+            resolve_path=True,
+        ),
+        verbose: bool = typer.Option(False, "--verbose", "-v",
+                                     help="Enable verbose output for the report (currently affects console output)."),
 ):
     """
     Scans a target URL for web vulnerabilities.
@@ -139,9 +158,59 @@ def scan(
     # reporter = ConsoleReporter(target_url=target_url) # If it took target_url or other params
     # reporter.print_report(issues, verbose=verbose)
 
-    ConsoleReporter.print_report(issues, verbose=verbose)  # Call static method
+    # Report generation
+    allowed_formats = ["console", "json", "pdf"]
+    if format_type not in allowed_formats:
+        typer.secho(
+            f"Error: Unsupported format type '{format_type}'. Allowed formats are: {', '.join(allowed_formats)}.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
 
-    if not issues:
+    if format_type == "console":
+        ConsoleReporter.print_report(issues, verbose=verbose)
+        if output_file:
+            typer.secho(
+                f"Warning: --output option is ignored for console format. Report printed to stdout.",
+                fg=typer.colors.YELLOW,
+            )
+    elif format_type == "json" or format_type == "pdf":
+        if not output_file:
+            typer.secho(
+                f"Error: --output <filename> is required when using --format {format_type}.",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(code=1)
+
+        try:
+            if format_type == "json":
+                JsonReporter.write_report(issues, str(output_file))
+                typer.secho(
+                    f"JSON report successfully written to {output_file}", fg=typer.colors.GREEN
+                )
+            elif format_type == "pdf":
+                PdfReporter.write_report(issues, str(output_file))
+                typer.secho(
+                    f"PDF report successfully written to {output_file}", fg=typer.colors.GREEN
+                )
+        except Exception as e:
+            typer.secho(
+                f"Failed to write {format_type.upper()} report to {output_file}: {e}", fg=typer.colors.RED, err=True
+            )
+            raise typer.Exit(code=1)
+    else:
+        # This case should ideally not be reached if Typer's Literal validation works as expected
+        # Kept for robustness, though Typer handles Literal validation.
+        typer.secho(
+            f"Error: Unsupported format type '{format_type}'.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    if not issues and format_type == "console":  # Only show this for console as JSON/PDF will be empty files
         typer.echo(
             "Consider running with --verbose for more details on checks performed, if applicable in future versions.")
 

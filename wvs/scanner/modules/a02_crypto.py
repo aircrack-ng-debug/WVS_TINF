@@ -114,6 +114,7 @@ class A02CryptoScanner(BaseScannerModule):
                     id="WVS-A02-003",
                 )
             )
+        return issues
 
 # --------------------------------------------------------------------------------------
     # Cookie helpers
@@ -128,7 +129,14 @@ class A02CryptoScanner(BaseScannerModule):
         # The loop `for cookie in resp.cookies.list_domains():` was empty and thus removed.
         # Direct iteration over headers is more reliable as per original comment.
 
-        for hdr in resp.headers.get_all("Set-Cookie"): # Python 3.11+ get_all()
+        set_cookie_header_str = resp.headers.get("Set-Cookie")
+        if set_cookie_header_str:
+            # Split by comma to handle multiple Set-Cookie headers in a single string
+            set_cookie_headers = [h.strip() for h in set_cookie_header_str.split(',')]
+        else:
+            set_cookie_headers = []
+
+        for hdr in set_cookie_headers:
             # Normalise attributes for search
             attr = hdr.lower()
             if "secure" not in attr:
