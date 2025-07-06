@@ -39,7 +39,7 @@ Die Anforderungen an WVS wurden aus den Bedürfnissen der folgenden zwei Persona
 
 ### 3.1. UML-Komponentendiagramm
 
-Das WVS-System ist modular aufgebaut, um eine hohe Wartbarkeit und Erweiterbarkeit zu gewährleisten. Die folgende Abbildung zeigt die Hauptkomponenten und ihre Beziehungen:
+Das WVS-System ist modular aufgebaut, um eine hohe Wartbarkeit und Erweiterbarkeit zu gewährleisten. Das System wurde zunächst synchron aufgebaut; eine Umstrukturierung auf asynchrones Scannen ist erst in Stage 4 (die bislang nicht erreicht wurde) vorgesehen. Die folgende Abbildung zeigt die Hauptkomponenten und ihre Beziehungen:
 
 ```mermaid
   +----------------------+
