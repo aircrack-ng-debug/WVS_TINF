@@ -53,7 +53,7 @@ Start-ups und KMU stehen verstärkt unter Druck, ihre Web-Anwendungen trotz knap
 * Signierter Plugin-Store für Zero-Downtime-Updates.
 
 ### 5.3 Benutzerfreundlichkeit (ohne GUI)  
-* `wvs init`-Assistent erstellt YAML-Config in < 2 Minuten.  
+* `wvs init`-Assistent erstellt TOML-Config in < 2 Minuten.  
 * CLI-Subcommands mit Beispielen, Auto-Update-Check.  
 * Personas-gerecht: Dev-Badge für Julia, Audit-PDF für Martin.
 
